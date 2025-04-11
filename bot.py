@@ -27,8 +27,8 @@ def get_candle_data():
         today, yesterday = res.json()
         return {
             'current_price': today['trade_price'],
-            'low_price': yesterday['low_price'],
-            'high_price': yesterday['high_price'],
+            'low_price': today['low_price'],
+            'high_price': today['high_price'],
             'prev_close': yesterday['trade_price']
         }
     else:
@@ -41,10 +41,13 @@ def run_strategy():
         data = get_candle_data()
         curr = data['current_price']
         low = data['low_price']
+        high = data['high_price']
+        prev_close = data['prev_close']
         threshold = low * 1.01
+        sell_price = threshold * 1.02
 
-        print(f"[시세] 현재가: {curr}원 / 전일 저가: {low}원")
-        send_telegram_message(f"{MARKET}  [시세] 현재가: {curr}원 / 전일 저가: {low}원")
+        print(f"{MARKET} [시세] 매수가: {threshold}원 / 매도가: {sell_price}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원")
+        send_telegram_message(f"{MARKET} [시세] 매수가: {threshold}원 / 매도가: {sell_price}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원")
 
         # 매수 조건
         if curr <= threshold and not buy_sent:
@@ -66,4 +69,4 @@ def run_strategy():
 while True:
     run_strategy()
     #time.sleep(60)  # 1분
-    time.sleep(5*60)  # 5분
+    time.sleep(300)  # 5분
