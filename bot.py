@@ -39,8 +39,8 @@ def get_candle_data(market):
         today, yesterday = res.json()
         return {
             'current_price': today['trade_price'],
-            'low_price': yesterday['low_price'],
-            'high_price': yesterday['high_price'],
+            'low_price': today['low_price'],
+            'high_price': today['high_price'],
             'prev_close': yesterday['trade_price']
         }
     else:
