@@ -51,10 +51,12 @@ def run_bot():
     markets = get_top_krw_markets_by_volume(10)
     coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}
 
-    print("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
-    send_telegram_message("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
-
     while True:
+        print("")
+        print("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
+        send_telegram_message("")
+        send_telegram_message("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
+
         for market in markets:
             if market != "":
             #if market == "KRW-UXLINK":
