@@ -52,6 +52,8 @@ def run_bot():
     coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}
 
     print("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
+    send_telegram_message("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
+
     while True:
         for market in markets:
             if market != "":
@@ -66,9 +68,7 @@ def run_bot():
                     sell_price = threshold * 1.03
 
                     msg = f"{market} [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원"
-                    print("============== 새로운 시세정보 =================")
                     print(msg)
-                    send_telegram_message("============== 새로운 시세정보 =================")
                     send_telegram_message(msg)
 
                     # 매수 조건: 현재가가 전일 저가의 1% 이내
