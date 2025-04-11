@@ -54,7 +54,7 @@ def run_bot():
     while True:
         print("")
         print("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
-        send_telegram_message("")
+        send_telegram_message(".... new ....")
         send_telegram_message("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
 
         for market in markets:
