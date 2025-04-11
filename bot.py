@@ -65,4 +65,5 @@ def run_strategy():
 # 1분마다 감시
 while True:
     run_strategy()
-    time.sleep(60)
+    #time.sleep(60)  # 1분
+    time.sleep(5*60)  # 5분
