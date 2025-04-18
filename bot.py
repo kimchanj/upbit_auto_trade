@@ -58,8 +58,8 @@ def run_bot():
         send_telegram_message("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
 
         for market in markets:
-            if market != "":
-            #if market == "KRW-UXLINK":
+            #if market != "":
+            if market == "KRW-UXLINK":
                 try:
                     data = get_candle_data(market)
                     curr = data['current_price']
