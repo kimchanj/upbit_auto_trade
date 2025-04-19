@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67e467f6-2072-4b71-be03-b072e62337ca" name="변경" comment="">
-      <change afterPath="$PROJECT_DIR$/keep_alive.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/upbit_auto_trade.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/upbit_auto_trade.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/keep_alive.py" beforeDir="false" afterPath="$PROJECT_DIR$/keep_alive.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
