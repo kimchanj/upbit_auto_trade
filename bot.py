@@ -116,5 +116,5 @@ if __name__ == "__main__":
     # Flask 웹 서버 실행 (포트 바인딩 충족)
     start_flask()
 
-from keep_alive import keep_alive
-keep_alive()
+    from keep_alive import keep_alive
+    keep_alive()
