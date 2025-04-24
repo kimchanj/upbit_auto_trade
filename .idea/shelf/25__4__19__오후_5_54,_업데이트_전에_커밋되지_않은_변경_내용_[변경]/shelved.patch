@@ -1,0 +1,77 @@
+Index: bot.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from flask import Flask\r\nimport threading\r\nimport time\r\nimport requests\r\nimport os\r\nfrom dotenv import load_dotenv\r\n\r\n# .env 파일 로드 (로컬 테스트용)\r\nload_dotenv()\r\n\r\n# 텔레그램 설정 (환경변수 또는 직접 입력)\r\nTELEGRAM_TOKEN = os.getenv(\"TELEGRAM_TOKEN\", \"your_telegram_bot_token\")\r\nTELEGRAM_CHAT_ID = os.getenv(\"TELEGRAM_CHAT_ID\", \"your_chat_id\")\r\n\r\n# 자동 매매 봇과 관련된 함수들\r\ndef send_telegram_message(msg):\r\n    url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'\r\n    data = {'chat_id': TELEGRAM_CHAT_ID, 'text': msg}\r\n    try:\r\n        requests.post(url, data=data)\r\n    except Exception as e:\r\n        print(\"텔레그램 전송 오류:\", e)\r\n\r\ndef get_top_krw_markets_by_volume(limit=10):\r\n    market_url = 'https://api.upbit.com/v1/market/all'\r\n    res = requests.get(market_url)\r\n    all_markets = res.json()\r\n    krw_markets = [m['market'] for m in all_markets if m['market'].startswith('KRW-')]\r\n    ticker_url = f'https://api.upbit.com/v1/ticker?markets={\",\".join(krw_markets)}'\r\n    ticker_res = requests.get(ticker_url)\r\n    tickers = ticker_res.json()\r\n    sorted_markets = sorted(tickers, key=lambda x: x['acc_trade_price_24h'], reverse=True)\r\n    return [m['market'] for m in sorted_markets[:limit]]\r\n\r\ndef get_candle_data(market):\r\n    url = f'https://api.upbit.com/v1/candles/days?market={market}&count=2'\r\n    res = requests.get(url)\r\n    if res.status_code == 200:\r\n        today, yesterday = res.json()\r\n        return {\r\n            'current_price': today['trade_price'],\r\n            'low_price': yesterday['low_price'],\r\n            'high_price': yesterday['high_price'],\r\n            'prev_close': yesterday['trade_price']\r\n        }\r\n    else:\r\n        raise Exception(f'{market} 시세 가져오기 실패')\r\n\r\ndef run_bot():\r\n    # 초기 코인 상태: 거래량 상위 10개 KRW 코인\r\n    markets = get_top_krw_markets_by_volume(10)\r\n    coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}\r\n\r\n    while True:\r\n        print(\"\")\r\n        print(\"\uD83D\uDD25 자동 코인 감시 시작 (상위 10개 KRW 코인)\")\r\n        send_telegram_message(\".... new ....\")\r\n        send_telegram_message(\"\uD83D\uDD25 자동 코인 감시 시작 (상위 10개 KRW 코인)\")\r\n\r\n        for market in markets:\r\n            if market != \"\":\r\n            #if market == \"KRW-UXLINK\":\r\n                try:\r\n                    data = get_candle_data(market)\r\n                    curr = data['current_price']\r\n                    low = data['low_price']\r\n                    high = data['high_price']\r\n                    prev_close = data['prev_close']\r\n                    threshold = low * 1.01\r\n                    sell_price = threshold * 1.03\r\n\r\n                    msg = f\"{market} [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원\"\r\n                    print(msg)\r\n                    send_telegram_message(msg)\r\n\r\n                    # 매수 조건: 현재가가 전일 저가의 1% 이내\r\n                    if curr <= threshold and not coin_state[market]['buy_sent']:\r\n                        coin_state[market]['buy_price'] = curr\r\n                        send_telegram_message(\r\n                            f\"[매수 조건] {market}\\n전일 저가({low:.0f})의 1% 이내 도달\\n매수가: {curr:.0f}\"\r\n                        )\r\n                        coin_state[market]['buy_sent'] = True\r\n\r\n                    # 매도 조건: 매수가 대비 +2% 수익 발생 시\r\n                    if coin_state[market]['buy_price'] and not coin_state[market]['sell_sent']:\r\n                        profit = (curr - coin_state[market]['buy_price']) / coin_state[market]['buy_price']\r\n                        if profit >= 0.02:\r\n                            send_telegram_message(\r\n                                f\"[매도 조건] {market}\\n+3% 수익 발생!\\n매수가: {coin_state[market]['buy_price']:.0f} → 현재가: {curr:.0f}\"\r\n                            )\r\n                            coin_state[market]['sell_sent'] = True\r\n\r\n                except Exception as e:\r\n                    print(f\"[{market}] 오류 발생: {e}\")\r\n\r\n        #time.sleep(60)  # 1분 간격\r\n        time.sleep(180)  # 3분 간격\r\n\r\n# Flask 앱 생성\r\napp = Flask(__name__)\r\n\r\n@app.route(\"/\")\r\ndef index():\r\n    return \"Telegram Bot is Running!\"\r\n\r\ndef start_flask():\r\n    # Render는 할당된 PORT 환경변수를 사용합니다.\r\n    port = int(os.environ.get(\"PORT\", 5000))\r\n    app.run(host=\"0.0.0.0\", port=port)\r\n\r\nif __name__ == \"__main__\":\r\n    # 봇 로직을 백그라운드 스레드로 실행합니다.\r\n    bot_thread = threading.Thread(target=run_bot, daemon=True)\r\n    bot_thread.start()\r\n\r\n    # Flask 웹 서버 실행 (포트 바인딩 충족)\r\n    start_flask()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/bot.py b/bot.py
+--- a/bot.py	(revision b89c08315addbbdb289e1bd31a9452fc378fc23b)
++++ b/bot.py	(date 1745051980003)
+@@ -39,8 +39,8 @@
+         today, yesterday = res.json()
+         return {
+             'current_price': today['trade_price'],
+-            'low_price': yesterday['low_price'],
+-            'high_price': yesterday['high_price'],
++            'low_price': today['low_price'],
++            'high_price': today['high_price'],
+             'prev_close': yesterday['trade_price']
+         }
+     else:
+@@ -115,3 +115,6 @@
+ 
+     # Flask 웹 서버 실행 (포트 바인딩 충족)
+     start_flask()
++
++from keep_alive import keep_alive
++keep_alive()
+Index: keep_alive.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/keep_alive.py b/keep_alive.py
+new file mode 100644
+--- /dev/null	(date 1745052058206)
++++ b/keep_alive.py	(date 1745052058206)
+@@ -0,0 +1,15 @@
++from flask import Flask
++from threading import Thread
++
++app = Flask(__name__)
++
++@app.route('/')
++def home():
++    return "Bot is alive!"
++
++def run():
++    app.run(host='0.0.0.0', port=8080)
++
++def keep_alive():
++    t = Thread(target=run)
++    t.start()
+Index: .idea/upbit_auto_trade.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\" />\r\n    <orderEntry type=\"inheritedJdk\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/upbit_auto_trade.iml b/.idea/upbit_auto_trade.iml
+--- a/.idea/upbit_auto_trade.iml	(revision b89c08315addbbdb289e1bd31a9452fc378fc23b)
++++ b/.idea/upbit_auto_trade.iml	(date 1744460914200)
+@@ -1,8 +1,10 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <module type="PYTHON_MODULE" version="4">
+   <component name="NewModuleRootManager">
+-    <content url="file://$MODULE_DIR$" />
+-    <orderEntry type="inheritedJdk" />
++    <content url="file://$MODULE_DIR$">
++      <excludeFolder url="file://$MODULE_DIR$/.venv" />
++    </content>
++    <orderEntry type="jdk" jdkName="Python 3.13 (upbit_auto_trade)" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
+ </module>
+\ No newline at end of file

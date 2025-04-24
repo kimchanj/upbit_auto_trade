@@ -21,7 +21,7 @@ def send_telegram_message(msg):
     except Exception as e:
         print("텔레그램 전송 오류:", e)
 
-def get_top_krw_markets_by_volume(limit, type):
+def get_top_krw_markets_by_volume(limit=10):
     market_url = 'https://api.upbit.com/v1/market/all'
     res = requests.get(market_url)
     all_markets = res.json()
@@ -29,55 +29,47 @@ def get_top_krw_markets_by_volume(limit, type):
     ticker_url = f'https://api.upbit.com/v1/ticker?markets={",".join(krw_markets)}'
     ticker_res = requests.get(ticker_url)
     tickers = ticker_res.json()
+    sorted_markets = sorted(tickers, key=lambda x: x['acc_trade_price_24h'], reverse=True)
+    return [m['market'] for m in sorted_markets[:limit]]
 
-    if type == 'V':
-        sorted_markets = sorted(tickers, key=lambda x: x['acc_trade_price_24h'], reverse=True)
-        return sorted_markets[:limit]
-    elif type == 'R':
-        # 전일 대비 상승률 계산
-        sorted_markets = sorted(
-            tickers,
-            key=lambda x: ((x['trade_price'] - x['prev_closing_price']) / x['prev_closing_price']),
-            reverse=True
-        )
-        return sorted_markets[:limit]
+def get_candle_data(market):
+    url = f'https://api.upbit.com/v1/candles/days?market={market}&count=2'
+    res = requests.get(url)
+    if res.status_code == 200:
+        today, yesterday = res.json()
+        return {
+            'current_price': today['trade_price'],
+            'low_price': yesterday['low_price'],
+            'high_price': yesterday['high_price'],
+            'prev_close': yesterday['trade_price']
+        }
+    else:
+        raise Exception(f'{market} 시세 가져오기 실패')
 
 def run_bot():
-    # 거래량 상위 10개 KRW 코인
-    #ranked = get_top_krw_markets_by_volume(10, 'V')
-    #title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
-
-    # 상승률 상위 10개 종목 추출
-    ranked = get_top_krw_markets_by_volume(10, 'R')
-    title = '🔥 자동 코인 감시 시작 (상승률 상위 10개 KRW 코인)'
-
-    markets = [m['market'] for m in ranked]
+    # 초기 코인 상태: 거래량 상위 10개 KRW 코인
+    markets = get_top_krw_markets_by_volume(10)
     coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}
 
     while True:
         print("")
-        print(title)
+        print("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
         send_telegram_message(".... new ....")
-        send_telegram_message(title)
+        send_telegram_message("🔥 자동 코인 감시 시작 (상위 10개 KRW 코인)")
 
-        for rank in ranked:
-            market = rank['market']
+        for market in markets:
             if market != "":
             #if market == "KRW-UXLINK":
                 try:
-                    #data = get_candle_data(market)
-                    data = rank
-
-                    curr = data['trade_price']
+                    data = get_candle_data(market)
+                    curr = data['current_price']
                     low = data['low_price']
                     high = data['high_price']
-                    prev_close = data['prev_closing_price']
-                    change_percent = round((curr - prev_close) / prev_close * 100, 2)
-
+                    prev_close = data['prev_close']
                     threshold = low * 1.01
                     sell_price = threshold * 1.03
 
-                    msg = f"{market} : {change_percent}% / [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원"
+                    msg = f"{market} [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원"
                     print(msg)
                     send_telegram_message(msg)
 
@@ -101,7 +93,8 @@ def run_bot():
                 except Exception as e:
                     print(f"[{market}] 오류 발생: {e}")
 
-        time.sleep(60)  # 1분 간격
+        #time.sleep(60)  # 1분 간격
+        time.sleep(180)  # 3분 간격
 
 # Flask 앱 생성
 app = Flask(__name__)
