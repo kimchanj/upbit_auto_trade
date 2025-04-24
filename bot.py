@@ -65,9 +65,7 @@ def run_bot():
             if market != "":
             #if market == "KRW-UXLINK":
                 try:
-                    #data = get_candle_data(market)
                     data = rank
-
                     curr = data['trade_price']
                     low = data['low_price']
                     high = data['high_price']
