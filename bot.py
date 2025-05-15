@@ -43,19 +43,20 @@ def get_top_krw_markets_by_volume(limit, type):
         return sorted_markets[:limit]
 
 def run_bot():
-    # 거래량 상위 10개 KRW 코인
-    #ranked = get_top_krw_markets_by_volume(10, 'V')
-    ranked = get_top_krw_markets_by_volume(100, 'V')
-    title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
-
-    # 상승률 상위 10개 종목 추출
-    #ranked = get_top_krw_markets_by_volume(10, 'R')
-    #title = '🔥 자동 코인 감시 시작 (상승률 상위 10개 KRW 코인)'
-
-    markets = [m['market'] for m in ranked]
-    coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}
 
     while True:
+        # 거래량 상위 10개 KRW 코인
+        # ranked = get_top_krw_markets_by_volume(10, 'V')
+        ranked = get_top_krw_markets_by_volume(100, 'V')
+        title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
+
+        # 상승률 상위 10개 종목 추출
+        # ranked = get_top_krw_markets_by_volume(10, 'R')
+        # title = '🔥 자동 코인 감시 시작 (상승률 상위 10개 KRW 코인)'
+
+        markets = [m['market'] for m in ranked]
+        coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}
+
         print("")
         print(title)
         send_telegram_message(".... new ....")
@@ -102,7 +103,7 @@ def run_bot():
                     print(f"[{market}] 오류 발생: {e}")
 
         #time.sleep(60)  # 1분 간격
-        time.sleep(30)  # 30초 간격
+        time.sleep(10)  # 10초 간격
 
 # Flask 앱 생성
 app = Flask(__name__)
