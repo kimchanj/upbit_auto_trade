@@ -45,7 +45,7 @@ def get_top_krw_markets_by_volume(limit, type):
 def run_bot():
     # 거래량 상위 10개 KRW 코인
     ranked = get_top_krw_markets_by_volume(100, 'V')
-    title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
+    #title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
 
     # 상승률 상위 10개 종목 추출
     #ranked = get_top_krw_markets_by_volume(10, 'R')
