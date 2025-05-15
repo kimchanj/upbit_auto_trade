@@ -101,7 +101,8 @@ def run_bot():
                 except Exception as e:
                     print(f"[{market}] 오류 발생: {e}")
 
-        time.sleep(60)  # 1분 간격
+        #time.sleep(60)  # 1분 간격
+        time.sleep(30)  # 30초 간격
 
 # Flask 앱 생성
 app = Flask(__name__)
