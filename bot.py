@@ -76,7 +76,7 @@ def run_bot():
                     threshold = open_price * 0.97 # 시작가의 97% (3% 하락한 지점)
                     sell_price = threshold * 1.05 # 매수가의 5% (수익률)
 
-                    msg = f"{market} : {change_percent}% / [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 시작가: {open_price}원  / 저가: {low}원 / 고가: {high}원"
+                    msg = f"{market} : {change_percent}% / [시세] 현재가: {curr}원 / 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 시작가: {open_price}원  / 저가: {low}원 / 고가: {high}원"
                     print(msg)
                     send_telegram_message(msg)
 
