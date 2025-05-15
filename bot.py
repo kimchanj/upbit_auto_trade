@@ -44,12 +44,12 @@ def get_top_krw_markets_by_volume(limit, type):
 
 def run_bot():
     # 거래량 상위 10개 KRW 코인
-    #ranked = get_top_krw_markets_by_volume(10, 'V')
-    #title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
+    ranked = get_top_krw_markets_by_volume(100, 'V')
+    title = '🔥 자동 코인 감시 시작 (거래량 상위 10개 KRW 코인)'
 
     # 상승률 상위 10개 종목 추출
-    ranked = get_top_krw_markets_by_volume(10, 'R')
-    title = '🔥 자동 코인 감시 시작 (상승률 상위 10개 KRW 코인)'
+    #ranked = get_top_krw_markets_by_volume(10, 'R')
+    #title = '🔥 자동 코인 감시 시작 (상승률 상위 10개 KRW 코인)'
 
     markets = [m['market'] for m in ranked]
     coin_state = {m: {'buy_price': None, 'buy_sent': False, 'sell_sent': False} for m in markets}
@@ -62,35 +62,36 @@ def run_bot():
 
         for rank in ranked:
             market = rank['market']
-            if market != "":
-            #if market == "KRW-UXLINK":
+            #if market != "":
+            if market == "KRW-VIRTUAL":
                 try:
                     data = rank
                     curr = data['trade_price']
+                    open_price = data['opening_price']
                     low = data['low_price']
                     high = data['high_price']
                     prev_close = data['prev_closing_price']
                     change_percent = round((curr - prev_close) / prev_close * 100, 2)
 
-                    threshold = low * 1.01
-                    sell_price = threshold * 1.03
+                    threshold = open_price * 0.97 # 시작가의 97% (3% 하락한 지점)
+                    sell_price = threshold * 1.05 # 매수가의 5% (수익률)
 
-                    msg = f"{market} : {change_percent}% / [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 당일저가: {low}원 / 당일고가: {high}원 / 전일종가: {prev_close}원"
+                    msg = f"{market} : {change_percent}% / [시세] 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 현재가: {curr}원 / 시작가: {open_price}원  / 저가: {low}원 / 고가: {high}원"
                     print(msg)
                     send_telegram_message(msg)
 
-                    # 매수 조건: 현재가가 전일 저가의 1% 이내
+                    # 매수 조건: 현재가가 시작가(open)의 -3%에 도달했을 때
                     if curr <= threshold and not coin_state[market]['buy_sent']:
                         coin_state[market]['buy_price'] = curr
                         send_telegram_message(
-                            f"[매수 조건] {market}\n전일 저가({low:.0f})의 1% 이내 도달\n매수가: {curr:.0f}"
+                            f"[매수 조건] {market}\n시작가의({open_price:.0f})의 3% 이내 도달\n매수가: {curr:.0f}"
                         )
                         coin_state[market]['buy_sent'] = True
 
-                    # 매도 조건: 매수가 대비 +2% 수익 발생 시
+                    # 매도 조건: 매수가 대비 +5% 수익 발생 시
                     if coin_state[market]['buy_price'] and not coin_state[market]['sell_sent']:
                         profit = (curr - coin_state[market]['buy_price']) / coin_state[market]['buy_price']
-                        if profit >= 0.02:
+                        if profit >= 0.05:
                             send_telegram_message(
                                 f"[매도 조건] {market}\n+3% 수익 발생!\n매수가: {coin_state[market]['buy_price']:.0f} → 현재가: {curr:.0f}"
                             )
