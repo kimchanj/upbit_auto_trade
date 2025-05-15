@@ -75,25 +75,30 @@ def run_bot():
                     prev_close = data['prev_closing_price']
                     change_percent = round((curr - prev_close) / prev_close * 100, 2)
 
-                    threshold = open_price * 0.97 # 시작가의 97% (3% 하락한 지점)
-                    sell_price = threshold * 1.05 # 매수가의 5% (수익률)
+                    # 현재가가 시작가 보다 낮을 때 현재가의 1% 낮춰서 매수가 판단
+                    if curr < open_price:
+                        threshold = curr * 0.99
+                    else:
+                        threshold = open_price * 0.98 # 시작가의 98% (2% 하락한 지점)
+
+                    sell_price = threshold * 1.03 # 매수가의 3% (수익률)
 
                     msg = f"{market} : {change_percent}% / [시세] 현재가: {curr}원 / 매수가: {round(threshold,2)}원 / 매도가: {round(sell_price,2)}원 / 시작가: {open_price}원  / 저가: {low}원 / 고가: {high}원"
                     print(msg)
                     send_telegram_message(msg)
 
-                    # 매수 조건: 현재가가 시작가(open)의 -3%에 도달했을 때
+                    # 매수 조건: 현재가가 시작가(open)의 -2%에 도달했을 때
                     if curr <= threshold and not coin_state[market]['buy_sent']:
                         coin_state[market]['buy_price'] = curr
                         send_telegram_message(
-                            f"[매수 조건] {market}\n시작가의({open_price:.0f})의 3% 이내 도달\n매수가: {curr:.0f}"
+                            f"[매수 조건] {market}\n시작가의({open_price:.0f})의 2% 이내 도달\n매수가: {curr:.0f}"
                         )
                         coin_state[market]['buy_sent'] = True
 
-                    # 매도 조건: 매수가 대비 +5% 수익 발생 시
+                    # 매도 조건: 매수가 대비 +3% 수익 발생 시
                     if coin_state[market]['buy_price'] and not coin_state[market]['sell_sent']:
                         profit = (curr - coin_state[market]['buy_price']) / coin_state[market]['buy_price']
-                        if profit >= 0.05:
+                        if profit >= 0.03:
                             send_telegram_message(
                                 f"[매도 조건] {market}\n+3% 수익 발생!\n매수가: {coin_state[market]['buy_price']:.0f} → 현재가: {curr:.0f}"
                             )
